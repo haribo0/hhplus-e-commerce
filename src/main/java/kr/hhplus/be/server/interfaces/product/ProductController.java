@@ -1,16 +1,24 @@
 package kr.hhplus.be.server.interfaces.product;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.hhplus.be.server.application.product.ProductService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
+
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/products")
 @Tag(name = "Product", description = "상품 API")
 public class ProductController {
+
+    private final ProductService productService;
 
     @GetMapping
     public List<ProductResponse> getAllProducts() {
