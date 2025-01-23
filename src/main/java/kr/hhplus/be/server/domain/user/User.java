@@ -2,11 +2,18 @@ package kr.hhplus.be.server.domain.user;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.server.domain.base.BaseEntity;
-import kr.hhplus.be.server.domain.point.UserPoint;
+import kr.hhplus.be.server.domain.point.Point;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "users")
 public class User extends BaseEntity {
 
@@ -18,10 +25,7 @@ public class User extends BaseEntity {
 
     private String email;
 
-    private String password;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private UserPoint userPoint;
+//    private String password;
 
 
 }

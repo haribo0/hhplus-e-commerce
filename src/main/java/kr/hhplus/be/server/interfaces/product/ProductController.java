@@ -25,16 +25,6 @@ public class ProductController {
 
     private final ProductService productService;
 
-//    @GetMapping
-//    public List<ProductResponse> getAllProducts() {
-//        return List.of(
-//                new ProductResponse(1L, "폴로 가디건", "clothing", 90000, 20),
-//                new ProductResponse(2L, "뉴발란스 백팩", "bag", 70000, 30),
-//                new ProductResponse(3L, "어그 부츠", "shoes", 180000, 50),
-//                new ProductResponse(4L, "스탠리 텀블러", "lifestyle", 180000, 10)
-//        );
-//    }
-
     @GetMapping("/products")
     public ResponseEntity<Page<ProductResponse>> getProducts(
             @RequestParam(required = false) Long categoryId,
