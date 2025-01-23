@@ -42,6 +42,9 @@ dependencies {
     // DB
 	runtimeOnly("com.mysql:mysql-connector-j")
 
+    // Redis
+//	implementation("org.redisson:redisson-spring-boot-starter:3.27.0")
+
 	// Lombok
 	implementation("org.projectlombok:lombok:1.18.26")  // 애플리케이션 코드에서 롬복 사용
 	annotationProcessor("org.projectlombok:lombok:1.18.26")
