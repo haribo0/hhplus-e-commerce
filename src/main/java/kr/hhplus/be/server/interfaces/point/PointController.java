@@ -20,7 +20,7 @@ public class PointController {
     @PostMapping("/charge")
     @Operation(summary = "포인트 충전", description = "포인트를 충전합니다.")
     public ResponseEntity<PointResponse.charge> chargePoints(@RequestBody PointRequest request) {
-        int points = pointService.charge(request.toCommand());
+        int points = pointService.charge(request.toCommand()).getPoints();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new PointResponse.charge("포인트가 충전되었습니다.",points)); // Mock balance
     }
@@ -30,7 +30,7 @@ public class PointController {
     public ResponseEntity<PointResponse.view> viewPoints(@RequestBody PointRequest request, @PathVariable Long userId) {
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new PointResponse.view(pointService.get(userId))); // Mock balance
+                .body(new PointResponse.view(pointService.get(userId).getPoints())); // Mock balance
     }
 
 }

@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "user_point")
+@Table(name = "point")
 public class Point extends BaseEntity {
 
     @Id

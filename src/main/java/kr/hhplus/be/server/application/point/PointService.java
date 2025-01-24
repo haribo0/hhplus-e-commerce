@@ -25,7 +25,7 @@ public class PointService {
     private final String POINT_CHARGE_DESC = "포인트 충전";
 
     // 일반 조회용: 락 없이 동작
-    public int get(Long userId) {
+    public Point get(Long userId) {
 
         Optional<Point> pointOptional = pointRepository.findByUserId(userId);
         if (pointOptional.isEmpty()) {
@@ -33,15 +33,15 @@ public class PointService {
                     .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
             Point newPoint = Point.createPoint(userId);
             pointRepository.save(newPoint); // 저장 후 반환
-            return 0;
+            return newPoint;
         }
-        return pointOptional.get().getPoints();
+        return pointOptional.get();
     }
 
 
     // 포인트 충전
     @Transactional
-    public int charge(PointCommand command) {
+    public Point charge(PointCommand command) {
         try {
             Long userId = command.userId();
             Point point = pointRepository.findByUserIdWithLock(userId)
@@ -56,7 +56,7 @@ public class PointService {
             pointRepository.save(point);
             PointHistory pointHistory = PointHistory.createPointHistory(point, PointHistoryType.USE, command.amount(), POINT_CHARGE_DESC);
             pointHistoryRepository.save(pointHistory);
-        return point.getPoints();
+        return point;
         } catch (OptimisticLockException e) {
             throw new RuntimeException("이미 다른 요청이 처리 중입니다. 잠시 후 다시 시도해 주세요.", e);
         } catch (Exception e) {
