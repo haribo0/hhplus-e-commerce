@@ -14,7 +14,7 @@ import org.testcontainers.utility.DockerImageName;
 class TestcontainersConfiguration {
 
 	public static final MySQLContainer<?> MYSQL_CONTAINER;
-//	public static final GenericContainer<?> REDIS_CONTAINER;
+	public static final GenericContainer<?> REDIS_CONTAINER;
 
 
 	static {
@@ -30,13 +30,13 @@ class TestcontainersConfiguration {
 
 
 		// Redis 컨테이너 설정
-//		REDIS_CONTAINER = new GenericContainer<>(DockerImageName.parse("redis:7.0"))
-//				.withExposedPorts(6379); // Redis 기본 포트
-//		REDIS_CONTAINER.start();
-//
-//		System.setProperty("spring.data.redis.host", REDIS_CONTAINER.getHost());
-//		System.setProperty("spring.data.redis.port", String.valueOf(REDIS_CONTAINER.getFirstMappedPort()));
-//		System.setProperty("spring.redis.port", REDIS_CONTAINER.getMappedPort(6379).toString());
+		REDIS_CONTAINER = new GenericContainer<>(DockerImageName.parse("redis:7.0"))
+				.withExposedPorts(6379); // Redis 기본 포트
+		REDIS_CONTAINER.start();
+
+		System.setProperty("spring.data.redis.host", REDIS_CONTAINER.getHost());
+		System.setProperty("spring.data.redis.port", String.valueOf(REDIS_CONTAINER.getFirstMappedPort()));
+		System.setProperty("spring.redis.port", REDIS_CONTAINER.getMappedPort(6379).toString());
 
 	}
 
@@ -45,8 +45,8 @@ class TestcontainersConfiguration {
 		if (MYSQL_CONTAINER.isRunning()) {
 			MYSQL_CONTAINER.stop();
 		}
-//		if (REDIS_CONTAINER.isRunning()) {
-//			REDIS_CONTAINER.stop();
-//		}
+		if (REDIS_CONTAINER.isRunning()) {
+			REDIS_CONTAINER.stop();
+		}
 	}
 }

@@ -1,0 +1,17 @@
+#singleServerConfig:
+#  address: "redis://localhost:6379"
+#  connectionPoolSize: 64
+#  connectionMinimumIdleSize: 10
+#threads: 16
+#nettyThreads: 32
+
+singleServerConfig:
+  address: "redis://localhost:6379"
+  connectionMinimumIdleSize: 10
+  connectionPoolSize: 64
+  idleConnectionTimeout: 10000
+  connectTimeout: 10000
+  timeout: 3000
+  retryAttempts: 3
+  retryInterval: 1500
+
