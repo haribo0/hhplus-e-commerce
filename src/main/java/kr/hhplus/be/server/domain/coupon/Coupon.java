@@ -57,6 +57,8 @@ public class Coupon extends BaseEntity {
                 .build();
     }
 
+
+
     /**
      * 쿠폰 만료 처리
      */

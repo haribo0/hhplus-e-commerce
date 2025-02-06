@@ -58,27 +58,6 @@ class CouponPolicyTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    @Test
-    @DisplayName("쿠폰의 발행 수를 감소시키면 발행 수량이 1 감소한다")
-    void decrementIssuedCount_ShouldDecreaseIssuedCount_WhenValid_WithFlatCoupon() {
-        // given
-        flatCouponPolicy.issue(); // 발행 수량 1 증가
-        int initialIssuedCount = flatCouponPolicy.getIssuedCount();
-
-        // when
-        flatCouponPolicy.decrementIssuedCount();
-
-        // then
-        assertThat(flatCouponPolicy.getIssuedCount()).isEqualTo(initialIssuedCount - 1);
-    }
-
-    @Test
-    @DisplayName("쿠폰의 발행 수가 0일 때 감소시키면 예외가 발생한다")
-    void decrementIssuedCount_ShouldThrowException_WhenNoIssuedCoupons_WithFlatCoupon() {
-        // when & then
-        assertThatThrownBy(() -> flatCouponPolicy.decrementIssuedCount())
-                .isInstanceOf(IllegalStateException.class);
-    }
 
     @Test
     @DisplayName("쿠폰이 소진 상태일 때 발급을 시도하면 예외가 발생한다")

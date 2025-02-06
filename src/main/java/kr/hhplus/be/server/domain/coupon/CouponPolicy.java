@@ -48,25 +48,27 @@ public class CouponPolicy extends BaseEntity {
      * 쿠폰 발행 수 증가
      */
     public void issue() {
-        if(this.startDate.isAfter(LocalDateTime.now()))
-            throw new IllegalStateException("아직 발급 기간이 아닙니다.");
-        if(this.expirationDate.isBefore(LocalDateTime.now())){
-            throw new IllegalStateException("발급 기간이 만료되었습니다.");
-        }
-        if(this.getStatus().equals(CouponPolicyStatus.EXHAUSTED)){
-            throw new IllegalStateException("쿠폰 발급 수량 초과");
-        } else if (this.getStatus()==CouponPolicyStatus.INACTIVE) {
-            throw new IllegalStateException("유효한 쿠폰 아님");
-        }
-        if (this.getIssuedCount() >= this.getTotalCount()) {
-            throw new IllegalStateException("쿠폰 발급 수량 초과");
-        }
         if (this.issuedCount >= this.totalCount) {
             status = CouponPolicyStatus.EXHAUSTED;
-            throw new IllegalStateException("더 이상 쿠폰을 발행할 수 없습니다.(수량 초과)");
+            throw new IllegalStateException("쿠폰이 모두 소진되었습니다.");
         }
         this.issuedCount++;
         if(issuedCount==totalCount) status = CouponPolicyStatus.EXHAUSTED;
+    }
+
+    public void validateBeforeRequest() {
+        if (this.startDate.isAfter(LocalDateTime.now())) {
+            throw new IllegalStateException("아직 발급 기간이 아닙니다.");
+        }
+        if (this.expirationDate.isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("발급 기간이 만료되었습니다.");
+        }
+        if (this.status == CouponPolicyStatus.EXHAUSTED) {
+            throw new IllegalStateException("쿠폰이 모두 소진되었습니다.");
+        }
+        if (this.status == CouponPolicyStatus.INACTIVE) {
+            throw new IllegalStateException("유효한 쿠폰이 아닙니다.");
+        }
     }
 
 }
