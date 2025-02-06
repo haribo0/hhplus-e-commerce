@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.coupon;
 
 import jakarta.transaction.Transactional;
+import kr.hhplus.be.server.common.redis.DistributedLock;
 import kr.hhplus.be.server.domain.coupon.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,15 +16,15 @@ public class CouponService {
     final CouponRepository couponRepository;
     final CouponPolicyRepository couponPolicyRepository;
 
+    @DistributedLock(key = "'COUPON_' + #couponId")
     @Transactional
     public CouponInfo issue(CouponCommand command){
         try {
             CouponPolicy couponPolicy = couponPolicyRepository.findByIdWithLock(command.couponPolicyId())
                     .orElseThrow(() -> new IllegalArgumentException("Coupon not found for id: " + command.couponPolicyId()));
-            couponPolicy.validateIssuance();
             Coupon coupon = Coupon.issue(command.userId(), couponPolicy);
             couponRepository.save(coupon);
-            couponPolicy.incrementIssuedCount();
+            couponPolicy.issue();
             couponPolicyRepository.save(couponPolicy);
             return CouponInfo.from(coupon);
         } catch (DataIntegrityViolationException e) {
@@ -32,7 +33,7 @@ public class CouponService {
     }
 
 
-    public BigDecimal calculateDiscount(BigDecimal totalPrice, Long couponId) {
+    public BigDecimal use(BigDecimal totalPrice, Long couponId) {
 
         if(couponId==null) return BigDecimal.ZERO;
 

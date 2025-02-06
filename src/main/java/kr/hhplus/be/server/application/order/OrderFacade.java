@@ -42,16 +42,16 @@ public class OrderFacade {
         Order order = orderService.create(command);
 
         // 쿠폰 적용
-        BigDecimal discountAmount = couponService.calculateDiscount(order.getTotalAmount(), command.couponId());
+        BigDecimal discountAmount = couponService.use(order.getTotalAmount(), command.couponId());
         order.applyDiscount(discountAmount);
 
         // 결제
         Payment payment = paymentService.create(new PaymentCommand.Create(order.getId(), order.getTotalAmount()));
-        pointService.use(new PointCommand(command.userId(), payment.getAmount().intValue()));
+        pointService.use(new PointCommand.Use(command.userId(), payment.getAmount().intValue()));
         payment.changeStatus(PaymentStatus.SUCCESS);
 
         // 주문 상태변경
-        order.updateStatus(OrderStatus.PAID);
+        orderService.updateStatus(order,OrderStatus.PAID);
 
         // 재고차감
         stockService.deductStock(orderStockInfos);

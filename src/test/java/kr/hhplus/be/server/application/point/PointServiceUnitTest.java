@@ -110,11 +110,11 @@ class PointServiceUnitTest {
             final Long userId = 1L;
             final int chargePoint = 1000;
             final int expectedPoint = chargePoint;
-            final PointCommand command = PointCommand.builder()
+            final PointCommand.Charge command = PointCommand.Charge.builder()
                     .userId(userId)
                     .amount(chargePoint)
                     .build();
-            final Point point = Point.createPoint(userId);
+            final Point point = new Point(userId);
             given(pointRepository.findByUserIdWithLock(userId))
                     .willReturn(Optional.of(point));
             // when
@@ -132,7 +132,7 @@ class PointServiceUnitTest {
             final int balance = 5000;
             final int usePoint = 1000;
             final int expectedPoint = balance - usePoint;
-            final PointCommand command = PointCommand.builder()
+            final PointCommand.Use command = PointCommand.Use.builder()
                     .userId(userId)
                     .amount(usePoint)
                     .build();
@@ -155,7 +155,7 @@ class PointServiceUnitTest {
             // given
             final Long userId = 1L;
             final int amount = 1000;
-            final PointCommand command = PointCommand.builder()
+            final PointCommand.Charge command = PointCommand.Charge.builder()
                     .userId(userId)
                     .amount(amount)
                     .build();
@@ -177,7 +177,7 @@ class PointServiceUnitTest {
             given(pointRepository.findByUserIdWithLock(userId))
                     .willReturn(Optional.of(point));
             final int chargePoint = 0;
-            final PointCommand request = PointCommand.builder()
+            final PointCommand.Charge request = PointCommand.Charge.builder()
                     .userId(userId)
                     .amount(chargePoint)
                     .build();

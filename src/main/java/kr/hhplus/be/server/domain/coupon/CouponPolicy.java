@@ -47,26 +47,7 @@ public class CouponPolicy extends BaseEntity {
     /**
      * 쿠폰 발행 수 증가
      */
-    public void incrementIssuedCount() {
-        if (this.issuedCount >= this.totalCount) {
-            status = CouponPolicyStatus.EXHAUSTED;
-            throw new IllegalStateException("더 이상 쿠폰을 발행할 수 없습니다.(수량 초과)");
-        }
-        this.issuedCount++;
-        if(issuedCount==totalCount) status = CouponPolicyStatus.EXHAUSTED;
-    }
-
-    /**
-     * 쿠폰 발행 수 감소
-     */
-    public void decrementIssuedCount() {
-        if (this.issuedCount <= 0) {
-            throw new IllegalStateException("발행된 쿠폰 수가 없습니다. (감소 불가)");
-        }
-        this.issuedCount--;
-    }
-
-    public void validateIssuance() {
+    public void issue() {
         if(this.startDate.isAfter(LocalDateTime.now()))
             throw new IllegalStateException("아직 발급 기간이 아닙니다.");
         if(this.expirationDate.isBefore(LocalDateTime.now())){
@@ -80,5 +61,12 @@ public class CouponPolicy extends BaseEntity {
         if (this.getIssuedCount() >= this.getTotalCount()) {
             throw new IllegalStateException("쿠폰 발급 수량 초과");
         }
+        if (this.issuedCount >= this.totalCount) {
+            status = CouponPolicyStatus.EXHAUSTED;
+            throw new IllegalStateException("더 이상 쿠폰을 발행할 수 없습니다.(수량 초과)");
+        }
+        this.issuedCount++;
+        if(issuedCount==totalCount) status = CouponPolicyStatus.EXHAUSTED;
     }
+
 }

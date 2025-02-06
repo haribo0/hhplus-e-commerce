@@ -91,12 +91,12 @@ class CouponServiceUnitTest {
 
     @Test
     @DisplayName("쿠폰 ID가 null이면 할인 금액은 0이다")
-    void calculateDiscount_whenCouponIdIsNull_thenReturnsZero() {
+    void use_whenCouponIdIsNull_thenReturnsZero() {
         // given
         BigDecimal totalPrice = BigDecimal.valueOf(1000);
 
         // when
-        BigDecimal discount = couponService.calculateDiscount(totalPrice, null);
+        BigDecimal discount = couponService.use(totalPrice, null);
 
         // then
         assertThat(discount).isEqualTo(BigDecimal.ZERO);
@@ -104,7 +104,7 @@ class CouponServiceUnitTest {
 
     @Test
     @DisplayName("유효하지 않은 쿠폰 ID를 사용하면 예외를 발생시킨다")
-    void calculateDiscount_whenCouponIdIsInvalid_thenThrowsException() {
+    void use_whenCouponIdIsInvalid_thenThrowsException() {
         // given
         Long invalidCouponId = 1L;
         BigDecimal totalPrice = BigDecimal.valueOf(1000);
@@ -112,14 +112,14 @@ class CouponServiceUnitTest {
         when(couponRepository.findById(invalidCouponId)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> couponService.calculateDiscount(totalPrice, invalidCouponId))
+        assertThatThrownBy(() -> couponService.use(totalPrice, invalidCouponId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("쿠폰이 유효하지 않습니다.");
     }
 
     @Test
     @DisplayName("주문 금액이 최소 금액 미만이면 예외를 발생시킨다")
-    void calculateDiscount_whenTotalPriceBelowMinOrderAmount_thenThrowsException() {
+    void use_whenTotalPriceBelowMinOrderAmount_thenThrowsException() {
         // given
         Long couponId = 1L;
         BigDecimal totalPrice = BigDecimal.valueOf(500);
@@ -133,13 +133,13 @@ class CouponServiceUnitTest {
         when(couponRepository.findById(couponId)).thenReturn(Optional.of(coupon));
 
         // when & then
-        assertThatThrownBy(() -> couponService.calculateDiscount(totalPrice, couponId))
+        assertThatThrownBy(() -> couponService.use(totalPrice, couponId))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("정액 할인 쿠폰을 사용하면 정확한 할인 금액을 반환한다")
-    void calculateDiscount_whenFlatCoupon_thenReturnsCorrectDiscount() {
+    void use_whenFlatCoupon_thenReturnsCorrectDiscount() {
         // given
         Long couponId = 1L;
         BigDecimal totalPrice = BigDecimal.valueOf(1000);
@@ -159,7 +159,7 @@ class CouponServiceUnitTest {
         when(couponRepository.findById(couponId)).thenReturn(Optional.of(coupon));
 
         // when
-        BigDecimal discount = couponService.calculateDiscount(totalPrice, couponId);
+        BigDecimal discount = couponService.use(totalPrice, couponId);
 
         // then
         assertThat(discount)
@@ -171,7 +171,7 @@ class CouponServiceUnitTest {
 
     @Test
     @DisplayName("퍼센트 할인 쿠폰을 사용하면 정확한 할인 금액을 반환한다")
-    void calculateDiscount_whenPercentCoupon_thenReturnsCorrectDiscount() {
+    void use_whenPercentCoupon_thenReturnsCorrectDiscount() {
         // given
         Long couponId = 1L;
         BigDecimal totalPrice = BigDecimal.valueOf(1000);
@@ -189,7 +189,7 @@ class CouponServiceUnitTest {
         when(couponRepository.findById(couponId)).thenReturn(Optional.of(coupon));
 
         // when
-        BigDecimal discount = couponService.calculateDiscount(totalPrice, couponId);
+        BigDecimal discount = couponService.use(totalPrice, couponId);
 
         // then
         assertThat(discount)
@@ -200,7 +200,7 @@ class CouponServiceUnitTest {
 
     @Test
     @DisplayName("퍼센트 할인 쿠폰이 최대 할인 금액을 초과하면 최대 금액을 반환한다")
-    void calculateDiscount_whenPercentCouponExceedsMax_thenReturnsMaxDiscount() {
+    void use_whenPercentCouponExceedsMax_thenReturnsMaxDiscount() {
         // given
         Long couponId = 1L;
         BigDecimal totalPrice = BigDecimal.valueOf(50000);
@@ -218,7 +218,7 @@ class CouponServiceUnitTest {
         when(couponRepository.findById(couponId)).thenReturn(Optional.of(coupon));
 
         // when
-        BigDecimal discount = couponService.calculateDiscount(totalPrice, couponId);
+        BigDecimal discount = couponService.use(totalPrice, couponId);
 
         // then
         assertThat(discount)

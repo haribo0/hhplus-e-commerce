@@ -33,12 +33,12 @@ class CouponPolicyTest {
 
     @Test
     @DisplayName("쿠폰의 발행 수를 증가시키면 발행 수량이 1 증가한다")
-    void incrementIssuedCount_ShouldIncreaseIssuedCount_WhenValid_WithFlatCoupon() {
+    void issue_ShouldIncreaseIssuedCount_WhenValid_WithFlatCoupon() {
         // given
         int initialIssuedCount = flatCouponPolicy.getIssuedCount();
 
         // when
-        flatCouponPolicy.incrementIssuedCount();
+        flatCouponPolicy.issue();
 
         // then
         assertThat(flatCouponPolicy.getIssuedCount()).isEqualTo(initialIssuedCount + 1);
@@ -46,7 +46,7 @@ class CouponPolicyTest {
 
     @Test
     @DisplayName("쿠폰의 발행 수가 총 수량을 초과하면 예외가 발생한다")
-    void incrementIssuedCount_ShouldThrowException_WhenIssuedCountExceedsTotalCount_WithFlatCoupon() {
+    void issue_ShouldThrowException_WhenIssuedCountExceedsTotalCount_WithFlatCoupon() {
         // given
         flatCouponPolicy = new CouponPolicy(
                 1L, "Flat Coupon", CouponType.FLAT, BigDecimal.valueOf(1000), BigDecimal.valueOf(5000), BigDecimal.valueOf(10000),
@@ -54,7 +54,7 @@ class CouponPolicyTest {
         );
 
         // when & then
-        assertThatThrownBy(() -> flatCouponPolicy.incrementIssuedCount())
+        assertThatThrownBy(() -> flatCouponPolicy.issue())
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -62,7 +62,7 @@ class CouponPolicyTest {
     @DisplayName("쿠폰의 발행 수를 감소시키면 발행 수량이 1 감소한다")
     void decrementIssuedCount_ShouldDecreaseIssuedCount_WhenValid_WithFlatCoupon() {
         // given
-        flatCouponPolicy.incrementIssuedCount(); // 발행 수량 1 증가
+        flatCouponPolicy.issue(); // 발행 수량 1 증가
         int initialIssuedCount = flatCouponPolicy.getIssuedCount();
 
         // when
@@ -82,7 +82,7 @@ class CouponPolicyTest {
 
     @Test
     @DisplayName("쿠폰이 소진 상태일 때 발급을 시도하면 예외가 발생한다")
-    void validateIssuance_ShouldThrowException_WhenCouponIsExhausted_WithCoupon() {
+    void issue_ShouldThrowException_WhenCouponIsExhausted_WithCoupon() {
         // given
         flatCouponPolicy = new CouponPolicy(
                 1L, "Flat Coupon", CouponType.FLAT, BigDecimal.valueOf(1000), BigDecimal.valueOf(5000), BigDecimal.valueOf(10000),
@@ -90,14 +90,14 @@ class CouponPolicyTest {
         );
 
         // when & then
-        assertThatThrownBy(() -> flatCouponPolicy.validateIssuance())
+        assertThatThrownBy(() -> flatCouponPolicy.issue())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("쿠폰 발급 수량 초과");
     }
 
     @Test
     @DisplayName("쿠폰이 비활상태일 때 발급을 시도하면 예외가 발생한다")
-    void validateIssuance_ShouldThrowException_WhenCouponIsInactive_WithCoupon() {
+    void issue_ShouldThrowException_WhenCouponIsInactive_WithCoupon() {
         // given
         flatCouponPolicy = new CouponPolicy(
                 1L, "Flat Coupon", CouponType.FLAT, BigDecimal.valueOf(1000), BigDecimal.valueOf(5000), BigDecimal.valueOf(10000),
@@ -105,17 +105,17 @@ class CouponPolicyTest {
         );
 
         // when & then
-        assertThatThrownBy(() -> flatCouponPolicy.validateIssuance())
+        assertThatThrownBy(() -> flatCouponPolicy.issue())
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("쿠폰의 발행 수량이 유효하면 발급이 정상적으로 된다")
-    void validateIssuance_ShouldNotThrowException_WhenIssuable_WithFlatCoupon() {
+    void issue_ShouldNotThrowException_WhenIssuable_WithFlatCoupon() {
         // given
-        flatCouponPolicy.incrementIssuedCount(); // 발행 수량 1 증가
+        flatCouponPolicy.issue(); // 발행 수량 1 증가
 
         // when & then
-        flatCouponPolicy.validateIssuance();  // 예외가 발생하지 않아야 한다.
+        flatCouponPolicy.issue();  // 예외가 발생하지 않아야 한다.
     }
 }

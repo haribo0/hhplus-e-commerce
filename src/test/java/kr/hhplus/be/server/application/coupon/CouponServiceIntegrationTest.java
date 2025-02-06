@@ -82,7 +82,7 @@ class CouponServiceIntegrationTest extends IntegrationServiceTest {
     @Test
     @Transactional
     @DisplayName("정액 할인 쿠폰으로 올바른 할인 금액을 반환한다")
-    void calculateDiscount_whenFlatCoupon_thenReturnsCorrectDiscount() {
+    void use_whenFlatCoupon_thenReturnsCorrectDiscount() {
         // given
         Long userId = 1L;
         BigDecimal discountAmt = BigDecimal.valueOf(1000);
@@ -92,7 +92,7 @@ class CouponServiceIntegrationTest extends IntegrationServiceTest {
         Coupon coupon = couponRepository.save(CouponFixture.coupon(userId,couponPolicy));
 
         // when
-        BigDecimal discount = couponService.calculateDiscount(BigDecimal.valueOf(15000), coupon.getId());
+        BigDecimal discount = couponService.use(BigDecimal.valueOf(15000), coupon.getId());
 
         // then
         assertThat(discount).isEqualTo(BigDecimal.valueOf(1000));
@@ -101,7 +101,7 @@ class CouponServiceIntegrationTest extends IntegrationServiceTest {
     @Test
     @Transactional
     @DisplayName("최소 주문 금액 조건을 충족하지 못하면 예외가 발생한다")
-    void calculateDiscount_whenBelowMinOrderAmount_thenThrowsException() {
+    void uses_whenBelowMinOrderAmount_thenThrowsException() {
         // given
         Long userId = 1L;
         BigDecimal discountAmt = BigDecimal.valueOf(1000);
@@ -111,7 +111,7 @@ class CouponServiceIntegrationTest extends IntegrationServiceTest {
         Coupon coupon = couponRepository.save(CouponFixture.coupon(userId,couponPolicy));
 
         // when & then
-        assertThatThrownBy(() -> couponService.calculateDiscount(BigDecimal.valueOf(500), coupon.getId()))
+        assertThatThrownBy(() -> couponService.use(BigDecimal.valueOf(500), coupon.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

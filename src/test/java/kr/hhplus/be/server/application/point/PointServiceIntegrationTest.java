@@ -47,7 +47,7 @@ class PointServiceIntegrationTest extends IntegrationServiceTest {
         Long userId = 1L;
         User user = UserFixture.user(userId);
         userRepository.save(user);
-        PointCommand command = new PointCommand(userId, 500);
+        PointCommand.Charge command = new PointCommand.Charge(userId, 500);
 
         // when
         Point updatedPoint = pointService.charge(command);
@@ -67,11 +67,11 @@ class PointServiceIntegrationTest extends IntegrationServiceTest {
         Long userId = 1L;
         User user = UserFixture.user(userId);
         userRepository.save(user);
-        Point point = Point.createPoint(userId);
+        Point point = new Point(userId);
         point.charge(1000); // 초기 잔액 충전
         pointRepository.save(point);
 
-        PointCommand command = new PointCommand(userId, 300);
+        PointCommand.Use command = new PointCommand.Use(userId, 300);
 
         // when
         Point updatedPoint = pointService.use(command);
@@ -91,11 +91,11 @@ class PointServiceIntegrationTest extends IntegrationServiceTest {
         Long userId = 1L;
         User user = UserFixture.user(userId);
         userRepository.save(user);
-        Point point = Point.createPoint(userId);
+        Point point = new Point(userId);
         point.charge(100); // 초기 잔액 충전
         pointRepository.save(point);
 
-        PointCommand command = new PointCommand(userId, 200);
+        PointCommand.Use command = new PointCommand.Use(userId, 200);
 
         // when & then
         assertThatThrownBy(() -> pointService.use(command))
@@ -110,12 +110,12 @@ class PointServiceIntegrationTest extends IntegrationServiceTest {
         Long userId = 1L;
         User user = UserFixture.user(userId);
         userRepository.save(user);
-        Point point = Point.createPoint(userId);
+        Point point = new Point(userId);
         pointRepository.save(point);
 
         // when
         Runnable task = () -> {
-            PointCommand command = new PointCommand(userId, 100);
+            PointCommand.Charge command = new PointCommand.Charge(userId, 100);
             pointService.charge(command);
         };
 

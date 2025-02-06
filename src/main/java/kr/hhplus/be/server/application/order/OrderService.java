@@ -5,6 +5,7 @@ import kr.hhplus.be.server.domain.coupon.*;
 import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.order.OrderItem;
 import kr.hhplus.be.server.domain.order.OrderRepository;
+import kr.hhplus.be.server.domain.order.OrderStatus;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.Stock;
@@ -64,5 +65,7 @@ public class OrderService {
 
     }
 
-
+    public void updateStatus(Order order, OrderStatus status) {
+        order.updateStatus(status);
+    }
 }
