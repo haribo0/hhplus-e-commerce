@@ -21,7 +21,9 @@ class ServerApplicationTests {
 	@Container
 	public static DockerComposeContainer<?> composeContainer =
 			new DockerComposeContainer<>(new File("docker-compose.yml"))
-					.withExposedService("mysql", 3306); // docker-compose 서비스 이름과 포트
+					.withExposedService("mysql", 3306)
+					.withExposedService("redis", 6379); // Redis 서비스 추가
+	 // docker-compose 서비스 이름과 포트
 
 
 
