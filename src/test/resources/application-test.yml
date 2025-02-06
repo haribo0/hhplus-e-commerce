@@ -1,0 +1,19 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  jpa:
+    generate-ddl: true
+
+    hibernate:
+      ddl-auto: update
+      properties:
+        hibernate:
+          format_sql: true
+          show_sql: true
+          default_batch_fetch_size: 100
+          open-in-view: false
+
+  sql:
+    init:
+      mode: always
