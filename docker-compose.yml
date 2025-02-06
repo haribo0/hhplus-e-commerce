@@ -8,10 +8,19 @@ services:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_USER=application
       - MYSQL_PASSWORD=application
-      - MYSQL_DATABASE=hhplus
+      - MYSQL_DATABASE=ecommerce
     volumes:
       - ./data/mysql/:/var/lib/mysql
-
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
 networks:
   default:
     driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
