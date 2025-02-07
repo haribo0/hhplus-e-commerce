@@ -72,6 +72,11 @@
 - 각 상품의 재고 관리가 정상적으로 이루어져 잘못된 주문이 발생하지 않도록 해야 합니다.
 
 ---
+동시성 보고서
+
+https://functional-punch-aa5.notion.site/1843680f92e780d2957ed444921b26e2?pvs=4
+
+---
 
 ### Milestone
 <img src="docs/milestone/milestone.png" alt="마일스톤 스크린샷">
