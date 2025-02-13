@@ -59,6 +59,8 @@ public class PointService {
         return point;
         } catch (OptimisticLockException e) {
             throw new RuntimeException("이미 다른 요청이 처리 중입니다. 잠시 후 다시 시도해 주세요.", e);
+        } catch (EntityNotFoundException | IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("포인트 충전 중 문제가 발생했습니다.", e);
         }
