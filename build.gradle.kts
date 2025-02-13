@@ -35,11 +35,20 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 
+
 	// Swagger
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
     // DB
 	runtimeOnly("com.mysql:mysql-connector-j")
+
+    // Redis
+//	implementation("org.redisson:redisson-spring-boot-starter:3.27.0")
+
+	// Lombok
+	implementation("org.projectlombok:lombok:1.18.26")  // 애플리케이션 코드에서 롬복 사용
+	annotationProcessor("org.projectlombok:lombok:1.18.26")
+	testImplementation("org.projectlombok:lombok:1.18.26")  // 테스트 코드에서 롬복 사용
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
