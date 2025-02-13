@@ -1,6 +1,5 @@
 package kr.hhplus.be.server.application.coupon;
 
-import jakarta.transaction.Transactional;
 import kr.hhplus.be.server.domain.coupon.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 
 @Service
@@ -74,7 +74,8 @@ public class CouponService {
         if (policy.getType() == CouponType.FLAT) {
             discount = policy.getDiscountValue(); // Flat 할인은 BigDecimal로 처리
         } else { // CouponType.PERCENT
-            discount = totalPrice.multiply(policy.getDiscountValue()).divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_UP);
+            discount = totalPrice.multiply(policy.getDiscountValue())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.UP);
             if (policy.getMaxDiscountAmount() != null) {
                 discount = discount.min(policy.getMaxDiscountAmount());
             }
