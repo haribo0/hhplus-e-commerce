@@ -31,7 +31,7 @@ public class PointService {
         if (pointOptional.isEmpty()) {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
-            Point newPoint = Point.createPoint(userId);
+            Point newPoint = new Point(userId);
             pointRepository.save(newPoint); // 저장 후 반환
             return newPoint;
         }
@@ -41,14 +41,15 @@ public class PointService {
 
     // 포인트 충전
     @Transactional
-    public Point charge(PointCommand command) {
+    public Point charge(PointCommand.Charge command) {
+
         try {
             Long userId = command.userId();
             Point point = pointRepository.findByUserIdWithLock(userId)
                     .orElseGet(() -> {
                         User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
-                        Point newPoint = Point.createPoint(userId);
+                        Point newPoint = new Point(userId);
                         pointRepository.save(newPoint); // 저장 후 반환
                         return newPoint;
                     });
@@ -66,7 +67,7 @@ public class PointService {
 
     // 포인트 사용
     @Transactional
-    public Point use(PointCommand command){
+    public Point use(PointCommand.Use command){
         try{
             Point point = pointRepository.findByUserIdWithLock(command.userId())
                     .orElseThrow(()->new IllegalArgumentException("사용할 포인트가 없습니다."));

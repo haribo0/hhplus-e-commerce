@@ -24,9 +24,9 @@ public class CouponController {
     @PostMapping
     @Operation(summary = "쿠폰 발급", description = "쿠폰을 발급합니다.")
     public ResponseEntity<CouponResponse> issueCoupon(@RequestBody CouponRequest request) {
-        CouponInfo issuedCouponInfo = couponService.issue(CouponRequest.toCommand(request));
+        couponService.request(CouponRequest.toCommand(request));
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new CouponResponse("쿠폰 발급 성공", issuedCouponInfo.id())); // Mock coupon ID
+                .body(new CouponResponse("쿠폰 발급이 성공적으로 요청되었습니다.")); // Mock coupon ID
     }
 
 }

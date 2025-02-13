@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CouponPolicyJpaRepository extends JpaRepository<CouponPolicy, Long> {
@@ -15,4 +16,6 @@ public interface CouponPolicyJpaRepository extends JpaRepository<CouponPolicy, L
     @Query("SELECT c FROM CouponPolicy c WHERE c.id = :id")
     Optional<CouponPolicy> findByIdWithLock(@Param("id") Long id);
 
+    @Query("SELECT p FROM CouponPolicy p WHERE p.status = 'ACTIVE'")
+    List<CouponPolicy> findAllActivePolicies();
 }

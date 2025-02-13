@@ -6,6 +6,7 @@ import kr.hhplus.be.server.domain.coupon.CouponPolicyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -28,5 +29,15 @@ public class CouponPolicyRepositoryImpl implements CouponPolicyRepository {
     @Override
     public Optional<CouponPolicy> findByIdWithLock(Long id) {
         return jpaRepository.findByIdWithLock(id);
+    }
+
+    @Override
+    public List<CouponPolicy> findAll() {
+        return jpaRepository.findAll();
+    }
+
+    @Override
+    public List<CouponPolicy> findAllActivePolicies() {
+        return jpaRepository.findAllActivePolicies();
     }
 }

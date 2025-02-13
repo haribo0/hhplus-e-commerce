@@ -2,7 +2,16 @@ package kr.hhplus.be.server.application.point;
 
 import lombok.Builder;
 
-@Builder
-public record PointCommand(Long userId, Integer amount){
+public class PointCommand{
+
+    @Builder
+    public record Use(Long userId, Integer amount){
+
+    }
+
+    @Builder
+    public record Charge(Long userId, Integer amount){
+
+    }
 
 }

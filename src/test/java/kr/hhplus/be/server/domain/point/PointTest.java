@@ -19,7 +19,7 @@ class PointTest {
             final Long userId = 1L;
             final int expectedPoint = 0;
             // when
-            final Point result = Point.createPoint(userId);
+            final Point result = new Point(userId);
             // then
             assertThat(result).isNotNull()
                     .extracting("userId", "points")

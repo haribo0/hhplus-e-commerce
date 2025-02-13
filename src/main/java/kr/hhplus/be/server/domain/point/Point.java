@@ -36,9 +36,6 @@ public class Point extends BaseEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public static Point createPoint(Long userId){
-        return new Point(userId);
-    }
 
     /**
      * 포인트 확인
