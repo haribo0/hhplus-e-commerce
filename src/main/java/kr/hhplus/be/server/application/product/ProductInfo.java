@@ -10,4 +10,8 @@ public record ProductInfo(Long id, String name, BigDecimal price, int quantity, 
     public record ItemDetail(Long id, String name, BigDecimal price, String description, int quantity) {
 
     }
+
+    public record PopularItem(Long id, String name, BigDecimal price, String description, int orderCount) {
+
+    }
 }
