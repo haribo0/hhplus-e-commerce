@@ -21,6 +21,7 @@ public class PointController {
     @Operation(summary = "포인트 충전", description = "포인트를 충전합니다.")
     public ResponseEntity<PointResponse.charge> chargePoints(@RequestBody PointRequest request) {
         int points = pointService.charge(request.toChargeCommand()).getPoints();
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new PointResponse.charge("포인트가 충전되었습니다.",points)); // Mock balance
     }

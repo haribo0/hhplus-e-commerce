@@ -11,9 +11,9 @@ public abstract class IntegrationServiceTest {
 
 //    @Autowired
 //    private TestContainerDatabaseCleaner testContainerDatabaseCleaner;
-//
-//    @AfterEach
-//    void init() {
+
+    @AfterEach
+    void init() {
 //        testContainerDatabaseCleaner.execute();
-//    }
+    }
 }

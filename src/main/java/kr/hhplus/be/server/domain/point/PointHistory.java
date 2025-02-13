@@ -6,7 +6,7 @@ import kr.hhplus.be.server.domain.user.User;
 import lombok.*;
 
 @Entity
-@Table(name = "user_point_history")
+@Table(name = "point_history")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor

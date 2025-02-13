@@ -42,6 +42,7 @@ public class PointService {
     // 포인트 충전
     @Transactional
     public Point charge(PointCommand.Charge command) {
+
         try {
             Long userId = command.userId();
             Point point = pointRepository.findByUserIdWithLock(userId)
