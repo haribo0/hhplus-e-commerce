@@ -15,6 +15,7 @@ import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import kr.hhplus.be.server.infra.dataplatform.DataPlaform;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -30,7 +31,8 @@ public class OrderFacade {
     private final PaymentService paymentService;
     private final PointService pointService;
     private final CouponService couponService;
-    private final DataPlaform dataPlatform;
+//    private final DataPlaform dataPlatform;
+    private final KafkaTemplate<String, OrderCompletedEvent> kafkaTemplate;
 
 
     @Transactional
@@ -42,13 +44,15 @@ public class OrderFacade {
         Order order = orderService.create(command);
 
         // 쿠폰 적용
-        BigDecimal discountAmount = couponService.use(order.getTotalAmount(), command.couponId());
-        order.applyDiscount(discountAmount);
+        if(command.couponId() != null){
+            BigDecimal discountAmount = couponService.use(order.getTotalAmount(), command.couponId());
+            order.applyDiscount(discountAmount);
+        }
 
         // 결제
         Payment payment = paymentService.create(new PaymentCommand.Create(order.getId(), order.getTotalAmount()));
         pointService.use(new PointCommand.Use(command.userId(), payment.getAmount().intValue()));
-        payment.changeStatus(PaymentStatus.SUCCESS);
+        paymentService.changeStatus(payment,PaymentStatus.SUCCESS);
 
         // 주문 상태변경
         orderService.updateStatus(order,OrderStatus.PAID);
@@ -57,11 +61,15 @@ public class OrderFacade {
         stockService.deductStock(orderStockInfos);
 
         // 외부 api 호출
-        dataPlatform.publish(order.getId(), payment.getId());
+
+        // Kafka 이벤트 발행 (데이터 플랫폼 서비스로 주문 정보 전달)
+        kafkaTemplate.send("order.completed", new OrderCompletedEvent(order.getId(), payment.getId()));
 
         return new OrderInfo(order.getId());
 
 
     }
+
+
 
 }

@@ -20,11 +20,11 @@ public class OrderItem extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "order_id", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Product product;
 
     private int quantity;
@@ -32,7 +32,6 @@ public class OrderItem extends BaseEntity {
     @Builder.Default
     @Column(name = "price", nullable = false, precision = 15, scale = 0)
     private BigDecimal price = BigDecimal.ZERO;
-
 
     public void setOrder(Order order) {
         this.order = order;

@@ -6,7 +6,7 @@ spring:
     generate-ddl: true
 
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
       properties:
         hibernate:
           format_sql: true
@@ -17,3 +17,17 @@ spring:
   sql:
     init:
       mode: always
+  kafka:
+    bootstrap-servers: 127.0.0.1:29092
+    consumer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.trusted.packages:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+logging:
+  level:
+    org.springframework.cache: trace
