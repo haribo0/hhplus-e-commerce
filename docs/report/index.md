@@ -1,26 +1,39 @@
-## 인덱스 적용 성능 개선
+인덱스 적용 성능 개선
 
----
+1. 개요
 
-### 1. **개요**
+E커머스 시스템에서 상품 조회 성능은 매우 중요한 요소입니다. 특히 인기 상품 조회와 같은 복잡한 쿼리는 자주 호출되며, 성능 최적화가 필수적입니다. 본 보고서에서는 ProductQueryRepository에 정의된 인기 상품 조회 쿼리에 인덱스를 추가하고, 인덱스 적용 전후 성능 개선을 분석한 결과를 다룹니다.
 
-E커머스 시스템에서 **상품 조회 성능**은 매우 중요한 요소입니다. 특히 **인기 상품 조회**와 같은 복잡한 쿼리는 자주 호출되며, 성능 최적화가 필수적입니다. 본 보고서에서는 **`ProductQueryRepository`**에 정의된 **인기 상품 조회 쿼리**에 인덱스를 추가하고, **인덱스 적용 전후** 성능 개선을 분석한 결과를 다룹니다.
+2. 문제 상황 및 인덱스 선택 이유
 
-### 2. **인덱스란?**
+문제점
 
-인덱스는 특정 열에 대한 **빠른 검색**을 가능하게 하는 자료구조입니다. 인덱스를 사용하면 **전체 테이블을 스캔**하는 대신, 데이터베이스가 인덱스를 활용하여 필요한 데이터를 더 빠르게 조회할 수 있습니다. 데이터가 많을수록 인덱스의 **효과**는 더욱 두드러집니다.
+인기 상품 조회 시 최근 30일 내 주문 정보를 필터링해야 하며, 주문 상태가 PAID인 데이터만 조회해야 합니다.
 
-### 3. **쿼리 설명**
+order_item 테이블과 product 테이블, order 테이블 간의 조인 연산이 포함되어 있어 조인 및 필터링 성능 저하가 발생합니다.
 
-**`findPopularProductsLast30Days`** 메서드는 **최근 30일** 동안의 **유료 주문**에서 **주문 수량**을 기준으로 상위 상품을 조회하는 쿼리입니다. 이 쿼리는 **`orderItem`**, **`product`**, **`order`** 테이블을 **조인**하여 상품 정보를 집계하고, 이를 기준으로 인기 상품을 조회합니다.
+기존 쿼리는 **전체 테이블 스캔(Full Table Scan)**이 발생하여 실행 속도가 느립니다.
 
-**쿼리 코드**:
+**파일 정렬(Using Filesort)과 임시 테이블(Using Temporary)**이 사용되어 성능 저하가 두드러집니다.
 
-```java
+인덱스 설정이 가장 먼저 고려되어야 하는 이유
+
+비용 대비 효과가 큽니다. 인덱스 설정은 코드 수정 없이도 성능을 크게 개선할 수 있는 가장 쉬운 방법 중 하나입니다.
+
+데이터베이스 최적화의 기본 기법입니다. 대부분의 성능 문제는 불필요한 전체 테이블 스캔에서 발생하며, 인덱스를 통해 이를 방지할 수 있습니다.
+
+다른 최적화 기법의 기반이 됩니다. 인덱스가 없으면 캐싱, 쿼리 리팩토링, 파티셔닝과 같은 추가적인 최적화 기법도 효과적으로 작동하지 않습니다.
+
+데이터 증가에 대비할 수 있습니다. 시간이 지나면서 데이터가 많아질수록 전체 테이블 스캔의 부하가 기하급수적으로 증가하기 때문에, 사전에 인덱스를 설정하는 것이 필수적입니다.
+
+3. 쿼리 설명
+
+findPopularProductsLast30Days 메서드는 최근 30일 동안의 유료 주문에서 주문 수량을 기준으로 상위 상품을 조회하는 쿼리입니다. 이 쿼리는 orderItem, product, order 테이블을 조인하여 상품 정보를 집계하고, 이를 기준으로 인기 상품을 조회합니다.
+
 public List<ProductInfo.PopularItem> findPopularProductsLast30Days(int limit) {
-    QProduct product = QProduct.product;
-    QOrder order = QOrder.order;
-    QOrderItem orderItem = QOrderItem.orderItem;
+QProduct product = QProduct.product;
+QOrder order = QOrder.order;
+QOrderItem orderItem = QOrderItem.orderItem;
 
     LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 
@@ -46,90 +59,51 @@ public List<ProductInfo.PopularItem> findPopularProductsLast30Days(int limit) {
             .fetch();
 }
 
-```
+4. 인덱스 필드 선정 및 근거
 
-이 쿼리는 **최근 30일** 동안 **`PAID` 상태**인 주문을 기준으로 **주문 수량**을 기준으로 인기 상품을 조회합니다.
+4.1. 인덱스 설정 기준
 
-### 4. **인덱스 적용 계획**
+카디널리티(데이터 중복도) 고려
 
-쿼리에서 **주문 상태**와 **주문 날짜**는 **WHERE 절**에서 자주 사용됩니다. 또한 **`orderItem.product_id`**와 **`orderItem.order_id`**는 **조인**에 사용되므로 해당 컬럼에 인덱스를 추가하는 것이 적절하다고 생각했습니다.
+**높은 카디널리티(중복도가 낮은 데이터)**는 인덱스를 통한 필터링 효과가 큽니다.
 
-**인덱스 적용 대상**:
+**낮은 카디널리티(중복도가 높은 데이터)**는 단순 인덱스보다는 복합 인덱스를 적용해야 효과적입니다.
 
-1. **주문 테이블 (`orders`)**: `created_at`에 인덱스를 추가하여 **주문 날짜 범위**로 효율적으로 필터링합니다.
-2. **주문 상세 테이블 (`order_item`)**: `product_id`와 `order_id`에 인덱스를 추가하여 **조인 성능**을 개선합니다.
+조회 패턴 분석을 통해 자주 사용되는 조건문 및 조인 키를 기반으로 인덱스를 설정해야 합니다.
 
-### 5. **인덱스 설정**
+정렬 및 그룹화 최적화를 위해 쿼리에서 ORDER BY 및 GROUP BY가 자주 사용되는 경우, 해당 컬럼을 포함한 인덱스를 활용하는 것이 중요합니다.
 
-쿼리 성능을 최적화하기 위해 아래와 같은 인덱스를 설정했습니다:
+4.2. orders.created_at 인덱스
 
-- **주문 테이블 (`orders`)**:
-    - `created_at`에 인덱스를 추가하여 **날짜 범위**를 기준으로 주문을 효율적으로 필터링합니다.
-- **주문 상세 테이블 (`order_item`)**:
-    - `product_id`와 `order_id`에 인덱스를 추가하여 **조인 성능**을 개선합니다.
+근거
 
-**인덱스 추가 쿼리**:
+WHERE 절에서 created_at이 최근 30일 기준으로 필터링됩니다.
 
-```sql
--- 주문 테이블에 인덱스 추가
-CREATE INDEX idx_order_created_at ON orders (created_at);
+**범위 검색(Range Scan)**을 최적화하여 불필요한 데이터 조회를 최소화합니다.
 
--- 주문 상세 테이블에 인덱스 추가
-CREATE INDEX idx_order_item_product_id ON order_item (product_id);
-CREATE INDEX idx_order_item_order_id ON order_item (order_id);
+카디널리티가 높아 필터링 효과가 좋습니다.
 
-```
+4.3. order_item.product_id, order_item.order_id 인덱스
 
-### 6. **실행 계획 분석 (인덱스 추가 전후)**
+근거
 
-### 6.1. **인덱스 추가 전 실행 계획**
+order_item 테이블에서 product 및 order 테이블과 조인됩니다.
 
-**실행 계획**:
+조인 키에 인덱스를 추가하면 탐색 속도가 빨라지고 해시 조인(Hash Join) 대신 인덱스 탐색(Index Seek)을 사용할 수 있습니다.
 
-EXPLAIN
+카디널리티가 낮은 경우, 단순 인덱스보다 복합 인덱스를 활용하는 것이 효과적입니다.
 
-| id | select_type | table | partitions | type | possible_keys | key | key_len | ref | rows | filtered | Extra |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | SIMPLE | orderItem | None | ALL | idx_order_item_order_id, idx_order_item_product_id | idx_order_item_order_id, idx_order_item_product_id | 2396175 | None | 2396175 | 100.0 | Using temporary; Using filesort |
-| 1 | SIMPLE | product | None | eq_ref | PRIMARY | PRIMARY | 8 | hhplus.orderItem.product_id | 1 | 100.0 | None |
-| 1 | SIMPLE | orders | None | eq_ref | PRIMARY | PRIMARY | 8 | hhplus.orderItem.order_id | 1 | 8.33 | Using where |
+5. 결론 및 추가 개선 방안
 
-**분석**:
+읽기 성능이 중요한 쿼리에서는 인덱스 활용이 필수적입니다.
 
-- *전체 테이블 스캔 (ALL)**이 발생하며, **임시 테이블**과 **파일 정렬 (Using filesort)**이 사용되어 성능이 저하되었습니다.
-- **필터링 후 남은 행의 비율**은 5.56%로 비효율적인 필터링이 이루어지고 있음을 확인할 수 있습니다.
+추가적인 최적화 방안
 
-### 6.2. **인덱스 추가 후 실행 계획**
+커버링 인덱스(Covering Index) 적용 고려 (order_id, created_at 복합 인덱스 활용).
 
-**실행 계획**:
+인덱스 사용률 모니터링을 통해 불필요한 인덱스를 제거.
 
-EXPLAIN
+쿼리 리팩토링을 통한 추가 최적화 검토.
 
-| id | select_type | table | partitions | type | possible_keys | key | key_len | ref | rows | filtered | Extra |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | SIMPLE | orderItem | None | ALL | idx_order_item_order_id, idx_order_item_product_id | idx_order_item_order_id, idx_order_item_product_id | 2396175 | None | 2396175 | 100.0 | Using temporary; Using filesort |
-| 1 | SIMPLE | product | None | eq_ref | PRIMARY | PRIMARY | 8 | hhplus.orderItem.product_id | 1 | 100.0 | None |
-| 1 | SIMPLE | orders | None | eq_ref | idx_order_created_at | idx_order_created_at | 8 | hhplus.orderItem.order_id | 1 | 50.0 | Using where |
+이러한 개선을 통해 E커머스 시스템의 인기 상품 조회 성능을 최적화할 수 있습니다.
 
-**분석**:
-
-- *`Using temporary; Using filesort`*가 여전히 발생하지만, **`orders` 테이블에서 `created_at`에 대한 인덱스**가 잘 활용되고 있습니다.
-- *`Using where`*가 사용되지만, 인덱스를 통해 **`created_at` 필터링**이 더욱 효율적으로 처리되었습니다.
-
-### 7. **성능 개선 비교**
-
-### 7.1. **인덱스 추가 전 실행 시간**:
-
-- **실행 시간**: `actual time=34.5..34.5` 초
-- **문제점**: 전체 테이블 스캔과 파일 정렬이 발생하면서 성능 저하가 발생했습니다.
-
-### 7.2. **인덱스 추가 후 실행 시간**:
-
-- **실행 시간**: `actual time=7..7` 초
-- **성능 개선**: **쿼리 성능이 80% 이상 향상**되었습니다. 인덱스를 통해 **정렬**과 **그룹화**가 훨씬 효율적으로 처리되었습니다.
-
-### 8. **결론**
-
-인덱스를 추가함으로써 **쿼리 성능이 크게 개선**되었습니다. 특히 **`orders.created_at`** 필드에 추가한 인덱스가 **가장 큰 성능 향상**을 보였습니다. 이 인덱스는 **주문 날짜**를 기준으로 **효율적인 필터링**을 가능하게 했고, 전체 테이블 스캔을 줄여주었습니다. 반면 **`order_item.product_id`**와 **`order_item.order_id`**에 추가한 인덱스는 성능 개선에 미미한 영향을 미쳤습니다. 이러한 결과는 **데이터의 분포**와 **조인 구조**에 따라 인덱스의 효율성이 달라짐을 보여줍니다. 특히 **`product_id`**와 **`order_id`**에 대한 인덱스는 이미 많은 **중복 데이터**가 존재하는 경우 성능 향상이 제한적일 수 있음을 나타냅니다. 그럼에도 **두 가지 인덱스를 없이 주문 날짜 인덱스만 설정**한 경우 **실행시간이 9.53**초인 것을 고려하면 여전히 두 컬럼에도 인덱스를 설정하는 것이 좋다는 결론을 내렸습니다.
-
-따라서, **읽기 성능이 중요한 쿼리**에서는 **주문 날짜 필터링**처럼 **자주 사용되는 범위 조건**에 대해 인덱스를 추가하는 것이 효율적일 수 있습니다.
