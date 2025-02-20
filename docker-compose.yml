@@ -89,3 +89,4 @@ networks:
 volumes:
   redis-data:
     driver: local
+  kafka-data:

@@ -15,15 +15,10 @@ public class OrderConsumer {
 
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "order.completed", groupId = "order-group")
-    public void consume(String message) {
-        OrderCompletedEvent event = null;
-        try {
-            event = objectMapper.readValue(message, OrderCompletedEvent.class);
-            log.info("Received order completed event: " + event.getOrderId());
-        } catch (JsonProcessingException e) {
-            log.error("Kafka 메시지 변환 실패: {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
+    @KafkaListener(topics = "order.completed", groupId = "order-group",
+            containerFactory = "kafkaListenerContainerFactory")
+    public void consume(OrderCompletedEvent event) {
+        log.info("🟢 Kafka 메시지 수신 - OrderID: {}, PaymentID: {}", event.getOrderId(), event.getPaymentId());
     }
+
 }
