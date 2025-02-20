@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.interfaces.coupon;
+package kr.hhplus.be.server.interfaces.coupon.api;
 
 import kr.hhplus.be.server.application.coupon.CouponCommand;
 

@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.interfaces.point;
+package kr.hhplus.be.server.interfaces.point.api;
 
 import kr.hhplus.be.server.application.point.PointCommand;
 import kr.hhplus.be.server.domain.point.PointHistoryType;

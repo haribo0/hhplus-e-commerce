@@ -1,11 +1,13 @@
 package kr.hhplus.be.server.application.order;
 
 import jakarta.transaction.Transactional;
+import kr.hhplus.be.server.application.order.outbox.OrderOutboxService;
 import kr.hhplus.be.server.domain.coupon.*;
 import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.order.OrderItem;
 import kr.hhplus.be.server.domain.order.OrderRepository;
 import kr.hhplus.be.server.domain.order.OrderStatus;
+import kr.hhplus.be.server.domain.order.event.OrderCompletedEvent;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.product.ProductRepository;
 import kr.hhplus.be.server.domain.product.Stock;
@@ -31,6 +33,8 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final StockRepository stockRepository;
     private final CouponRepository couponRepository;
+    private final OrderOutboxService orderOutboxService;
+
 
     // 주문 생성
     @Transactional
@@ -67,5 +71,11 @@ public class OrderService {
 
     public void updateStatus(Order order, OrderStatus status) {
         order.updateStatus(status);
+    }
+
+    @Transactional
+    public void completeOrder(Long orderId, Long paymentId) {
+        OrderCompletedEvent event = new OrderCompletedEvent(orderId, paymentId);
+        orderOutboxService.saveEvent(event);
     }
 }

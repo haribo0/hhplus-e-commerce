@@ -1,6 +1,9 @@
 package kr.hhplus.be.server.application.order;
 
-import kr.hhplus.be.server.application.product.ProductService;
+import kr.hhplus.be.server.domain.order.event.OrderCompletedEvent;
+import kr.hhplus.be.server.domain.order.outbox.OrderDataOutbox;
+import kr.hhplus.be.server.domain.order.outbox.OrderDataOutboxRepository;
+import kr.hhplus.be.server.domain.order.outbox.OutboxStatus;
 import kr.hhplus.be.server.domain.point.Point;
 import kr.hhplus.be.server.domain.product.Product;
 import kr.hhplus.be.server.domain.product.Stock;
@@ -26,21 +29,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
-
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -52,7 +54,7 @@ public class OrderFacadeTest {
     private OrderFacade orderFacade;
 
     @Autowired
-    private KafkaTemplate<String, OrderCompletedEvent> kafkaTemplate;
+    private OrderDataOutboxRepository outboxRepository;
 
     @Autowired
     private ConsumerFactory<String, OrderCompletedEvent> consumerFactory;
@@ -90,7 +92,7 @@ public class OrderFacadeTest {
 
 
     @Test
-    @DisplayName("주문 완료 시 Kafka 이벤트를 발행한다.")
+    @DisplayName("주문 완료 시 Outbox에 이벤트가 저장되고, Kafka로 전송된다.")
     void publish_kafka_event_after_completing_order() {
         // given
         User user = UserFixture.user("userA");
@@ -111,8 +113,13 @@ public class OrderFacadeTest {
         // then
         assertThat(orderInfo).isNotNull();
 
-        // Kafka 메시지가 정상적으로 발행되었는지 확인
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<OrderDataOutbox> outboxEvents = outboxRepository.findAllByStatus(OutboxStatus.INIT);
+            assertThat(outboxEvents).isNotEmpty();
+            assertThat(outboxEvents.get(0).getStatus()).isEqualTo(OutboxStatus.INIT);
+        });
+
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
             ConsumerRecords<String, OrderCompletedEvent> records = KafkaTestUtils.getRecords(consumer);
             assertThat(records.count()).isGreaterThan(0);
 
@@ -120,6 +127,12 @@ public class OrderFacadeTest {
                 assertThat(record.value()).isNotNull();
                 assertThat(record.value().getOrderId()).isEqualTo(orderInfo.orderId());
             }
+        });
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<OrderDataOutbox> processedEvents = outboxRepository.findAllByStatus(OutboxStatus.PROCESSED);
+            assertThat(processedEvents).isNotEmpty();
+            assertThat(processedEvents.get(0).getStatus()).isEqualTo(OutboxStatus.PROCESSED);
         });
     }
 }

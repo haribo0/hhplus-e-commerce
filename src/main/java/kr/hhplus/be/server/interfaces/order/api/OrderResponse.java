@@ -1,3 +1,3 @@
-package kr.hhplus.be.server.interfaces.order;
+package kr.hhplus.be.server.interfaces.order.api;
 
 public record OrderResponse(String message, Long orderId) {}

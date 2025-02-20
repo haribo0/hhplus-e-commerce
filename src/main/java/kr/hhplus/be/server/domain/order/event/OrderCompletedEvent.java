@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.application.order;
+package kr.hhplus.be.server.domain.order.event;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +13,6 @@ public class OrderCompletedEvent {
     private Long orderId;
     private Long paymentId;
 
-    @JsonCreator
     public OrderCompletedEvent(@JsonProperty("orderId") Long orderId,
                                @JsonProperty("paymentId") Long paymentId) {
         this.orderId = orderId;

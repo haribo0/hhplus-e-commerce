@@ -7,19 +7,17 @@ import kr.hhplus.be.server.application.payment.PaymentService;
 import kr.hhplus.be.server.application.point.PointCommand;
 import kr.hhplus.be.server.application.point.PointService;
 import kr.hhplus.be.server.application.product.OrderStockInfo;
-import kr.hhplus.be.server.application.product.ProductService;
 import kr.hhplus.be.server.application.product.StockService;
 import kr.hhplus.be.server.domain.order.Order;
 import kr.hhplus.be.server.domain.order.OrderStatus;
+import kr.hhplus.be.server.domain.order.event.OrderCompletedEvent;
 import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.payment.PaymentStatus;
-import kr.hhplus.be.server.infra.dataplatform.DataPlaform;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -32,7 +30,6 @@ public class OrderFacade {
     private final PointService pointService;
     private final CouponService couponService;
 //    private final DataPlaform dataPlatform;
-    private final KafkaTemplate<String, OrderCompletedEvent> kafkaTemplate;
 
 
     @Transactional
@@ -63,7 +60,7 @@ public class OrderFacade {
         // 외부 api 호출
 
         // Kafka 이벤트 발행 (데이터 플랫폼 서비스로 주문 정보 전달)
-        kafkaTemplate.send("order.completed", new OrderCompletedEvent(order.getId(), payment.getId()));
+        orderService.completeOrder(order.getId(), payment.getId());
 
         return new OrderInfo(order.getId());
 

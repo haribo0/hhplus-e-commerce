@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.interfaces.point;
+package kr.hhplus.be.server.interfaces.point.api;
 
 public record PointResponse() {
 

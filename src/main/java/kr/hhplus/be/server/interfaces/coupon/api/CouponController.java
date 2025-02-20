@@ -1,9 +1,7 @@
-package kr.hhplus.be.server.interfaces.coupon;
+package kr.hhplus.be.server.interfaces.coupon.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.application.coupon.CouponCommand;
-import kr.hhplus.be.server.application.coupon.CouponInfo;
 import kr.hhplus.be.server.application.coupon.CouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.interfaces.point;
+package kr.hhplus.be.server.interfaces.point.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
