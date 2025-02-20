@@ -70,9 +70,9 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:mysql'
+	testImplementation 'org.testcontainers:kafka'
 	testImplementation 'org.awaitility:awaitility:4.2.0'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
-
 
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
