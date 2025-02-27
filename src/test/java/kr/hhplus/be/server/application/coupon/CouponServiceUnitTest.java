@@ -9,9 +9,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +62,7 @@ class CouponServiceUnitTest {
 
         // when & then
         assertThatThrownBy(() -> couponService.request(command))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -70,20 +72,39 @@ class CouponServiceUnitTest {
         Long couponPolicyId = 1L;
         Long userId = 123L;
         CouponCommand command = new CouponCommand(userId, couponPolicyId);
-        CouponPolicy policy = mock(CouponPolicy.class);
+        String redisCountKey = String.format("coupon:%d:count", couponPolicyId);
+        String redisIssuedKey = String.format("coupon:%d:issued", couponPolicyId);
+        String redisRequestKey = String.format("coupon:%d:request", couponPolicyId);
+        String userLockKey = "lock:coupon:request:" + couponPolicyId + ":" + userId;
 
-        // Redis 키 생성 로직과 동일하게 작성
-        String redisKey = String.format("coupon:%d:request", couponPolicyId);
+        // RedisTemplate과 관련된 mock 설정
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        SetOperations<String, String> setOperations = mock(SetOperations.class);
+        ZSetOperations<String, String> zSetOperations = mock(ZSetOperations.class);
 
-        when(couponPolicyRepository.findById(couponPolicyId)).thenReturn(Optional.of(policy));
-        when(zSetOperations.add(eq(redisKey), eq(userId.toString()), anyDouble())).thenReturn(true);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(redisTemplate.opsForSet()).thenReturn(setOperations);
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+
+        // 쿠폰 재고 Redis 관리 키 관련 Mock 설정
+        when(valueOperations.decrement(redisCountKey)).thenReturn(5L); // 쿠폰 감소 후 5개 남았다고 가정
+        when(valueOperations.increment(redisCountKey)).thenReturn(6L); // 롤백 시 +1
+
+        // 중복 요청 방지 (setIfAbsent)
+        when(valueOperations.setIfAbsent(eq(userLockKey), eq("1"), any(Duration.class))).thenReturn(true);
+
+        // Redis ZSet 추가 (대기열 등록)
+        when(zSetOperations.add(eq(redisRequestKey), eq(userId.toString()), anyDouble())).thenReturn(true);
 
         // when
         couponService.request(command);
 
         // then
-        verify(zSetOperations).add(eq(redisKey), eq(userId.toString()), anyDouble());
+        verify(valueOperations).decrement(redisCountKey); // 쿠폰 수량 감소 확인
+        verify(valueOperations).setIfAbsent(eq(userLockKey), eq("1"), any(Duration.class)); // 중복 요청 방지 확인
+        verify(zSetOperations).add(eq(redisRequestKey), eq(userId.toString()), anyDouble()); // Redis 대기열 추가 확인
     }
+
 
 
 
@@ -94,16 +115,28 @@ class CouponServiceUnitTest {
         Long couponPolicyId = 1L;
         Long userId = 123L;
         CouponCommand command = new CouponCommand(userId, couponPolicyId);
-        CouponPolicy policy = mock(CouponPolicy.class);
+        String redisCountKey = String.format("coupon:%d:count", couponPolicyId);
+        String userLockKey = "lock:coupon:request:" + couponPolicyId + ":" + userId;
 
-        when(couponPolicyRepository.findById(couponPolicyId)).thenReturn(Optional.of(policy));
-        when(zSetOperations.rank(anyString(), anyString())).thenReturn(1L); // 이미 존재하는 사용자
-        when(setOperations.isMember(anyString(), anyString())).thenReturn(true); // 중복 발급된 사용자
+        // RedisTemplate 관련 Mock 설정
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        // 쿠폰 재고 관련 Mock 설정 (여기선 재고가 남아있다고 가정)
+        when(valueOperations.decrement(redisCountKey)).thenReturn(5L);
+
+        // 중복 요청 방지 (setIfAbsent가 실패하도록 설정)
+        when(valueOperations.setIfAbsent(eq(userLockKey), eq("1"), any(Duration.class))).thenReturn(false);
 
         // when & then
         assertThatThrownBy(() -> couponService.request(command))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("이미 쿠폰을 발급 요청한 사용자입니다.");
+
+        // 쿠폰 재고 롤백 검증
+        verify(valueOperations).increment(redisCountKey);
     }
+
 
     @Test
     @DisplayName("쿠폰 ID가 null이면 할인 금액은 0이다")

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.Instant;
 
 @Service
@@ -20,6 +21,9 @@ public class CouponService {
     private final RedisTemplate<String, String> redisTemplate;
     private static final String COUPON_REQUEST_KEY = "coupon:%s:request";
     private static final String COUPON_ISSUED_KEY = "coupon:%s:issued";
+    private static final String USER_LOCK_KEY = "lock:coupon:request:";
+    private static final String COUPON_COUNT_KEY = "coupon:%s:count";
+
 
     /**
      * 선착순 쿠폰 요청 (사용자가 신청할 때 실행됨)
@@ -27,33 +31,31 @@ public class CouponService {
     public void request(CouponCommand command) {
         Long policyId = command.couponPolicyId();
         Long userId = command.userId();
+        String redisCountKey = String.format(COUPON_COUNT_KEY, policyId);
         String redisRequestKey = String.format(COUPON_REQUEST_KEY, policyId);
         String redisIssuedKey = String.format(COUPON_ISSUED_KEY, policyId);
-        String userLockKey = "lock:coupon:request:" + policyId + ":" + userId; // 사용자별 중복 요청 방지용 키
+        String userLockKey = USER_LOCK_KEY + policyId + ":" + userId;
 
-        // 1. 쿠폰 정책 조회 후 사전 검증
-        CouponPolicy policy = couponPolicyRepository.findById(policyId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 쿠폰 정책입니다."));
-        policy.validateBeforeRequest(); // 쿠폰 정책 검증
-
-        // 쿠폰 잔여 수량 확인
-        int remainingCoupons = policy.getTotalCount() - policy.getIssuedCount();
-        if (remainingCoupons <= 0) {
-            throw new IllegalStateException("쿠폰이 모두 소진되었습니다."); // 즉시 실패 반환
+        // 1. 쿠폰 재고를 Redis에서 확인 후 감소
+        Long stock = redisTemplate.opsForValue().decrement(redisCountKey);
+        if (stock != null && stock < 0) {
+            redisTemplate.opsForValue().increment(redisCountKey); // 롤백
+            throw new IllegalStateException("쿠폰이 모두 소진되었습니다.");
         }
 
-        // 2. 중복 발급 여부 확인
-        Boolean isNewRequest = redisTemplate.opsForValue().setIfAbsent(userLockKey, "1");
+        // 2. 중복 발급 여부 확인 (TTL 10분 설정)
+        Boolean isNewRequest = redisTemplate.opsForValue().setIfAbsent(userLockKey, "1", Duration.ofMinutes(10));
         if (Boolean.FALSE.equals(isNewRequest)) {
+            redisTemplate.opsForValue().increment(redisCountKey); // 롤백
             throw new IllegalStateException("이미 쿠폰을 발급 요청한 사용자입니다.");
         }
 
-
-        // 3. Redis Sorted Set에 요청 추가 (score: 요청 시각)
+        // 3. Redis Sorted Set(ZSet)에 요청 추가 (대기열 유지)
         redisTemplate.opsForZSet().add(redisRequestKey, userId.toString(), Instant.now().toEpochMilli());
 
         log.info("쿠폰 요청 등록 - userId: {}, policyId: {}", userId, policyId);
     }
+
 
 
 
