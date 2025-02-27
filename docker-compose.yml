@@ -23,20 +23,6 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
-#  kafka:
-#    image: confluentinc/cp-kafka:latest
-#    ports:
-#      - "9092:9092"
-##      - "19092:19092"
-##      - "19094:19094"
-#    environment:
-#      KAFKA_BROKER_ID: 1
-#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-##      KAFKA_LISTENERS: INTERNAL://kafka-1:19092, EXTERNAL://kafka-1:19094,
-#    depends_on:
-#      - zookeeper
   kafka:
     image: bitnami/kafka:3.5.1
     ports:
@@ -54,21 +40,6 @@ services:
     networks:
       - default
 
-  #  schema-registry:
-#    image: confluentinc/cp-schema-registry:latest
-#    environment:
-#      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'PLAINTEXT://kafka-1:9092'
-#      SCHEMA_REGISTRY_HOST_NAME: 'schema-registry'
-#      SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8085'
-#      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: 'INFO'
-#    ports:
-#      - 8085:8085
-#
-#    depends_on:
-#      - kafka-1
-#    networks:
-#      default_bridge:
-#        ipv4_address: 172.26.0.13
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -82,6 +53,36 @@ services:
       - KAFKA_CLUSTERS_0_NAME=Fast-Ecommerce-Kafka
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
 
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - influxdb
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+  k6:
+    image: grafana/k6
+    container_name: k6
+    network_mode: "host"
+    volumes:
+      - ./tests:/scripts
+    command: [ "run", "/scripts/k6-test.js" ]
+    depends_on:
+      - influxdb
+
 networks:
   default:
     driver: bridge
@@ -90,3 +91,5 @@ volumes:
   redis-data:
     driver: local
   kafka-data:
+  grafana-storage:
+
