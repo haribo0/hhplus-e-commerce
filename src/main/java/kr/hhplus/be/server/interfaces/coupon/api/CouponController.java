@@ -19,7 +19,7 @@ public class CouponController {
 
     private final CouponService couponService;
 
-    @PostMapping
+    @PostMapping("/request")
     @Operation(summary = "쿠폰 발급", description = "쿠폰을 발급합니다.")
     public ResponseEntity<CouponResponse> issueCoupon(@RequestBody CouponRequest request) {
         couponService.request(CouponRequest.toCommand(request));
